@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediQuick - AI Symptom Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+        .prescription-card {
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .prescription-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.15);
+        }
+        .symptom-chip {
+            transition: all 0.2s ease;
+        }
+        .symptom-chip:hover {
+            transform: scale(1.05);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .animate-progress {
+            animation: progress 2s ease-in-out infinite;
+        }
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Header -->
+    <header class="gradient-bg text-white sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-heartbeat text-3xl"></i>
+                    <h1 class="text-2xl font-bold">MediQuick</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#" class="nav-link hover:text-blue-200 transition" data-page="home">Home</a>
+                    <a href="#" class="nav-link hover:text-blue-200 transition" data-page="about">About</a>
+                    <a href="#" class="nav-link hover:text-blue-200 transition" data-page="faq">FAQ</a>
+                    <a href="#" class="nav-link hover:text-blue-200 transition" data-page="contact">Contact</a>
+                </nav>
+                <button id="mobileMenuBtn" class="md:hidden text-xl">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-blue-700 px-4 py-2">
+            <div class="flex flex-col space-y-2">
+                <a href="#" class="nav-link hover:text-blue-200 transition py-2" data-page="home">Home</a>
+                <a href="#" class="nav-link hover:text-blue-200 transition py-2" data-page="about">About</a>
+                <a href="#" class="nav-link hover:text-blue-200 transition py-2" data-page="faq">FAQ</a>
+                <a href="#" class="nav-link hover:text-blue-200 transition py-2" data-page="contact">Contact</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Home Page -->
+    <div id="home" class="page active">
+        <!-- Hero Section -->
+        <section class="gradient-bg text-white py-16">
+            <div class="container mx-auto px-4 text-center">
+                <div class="flex justify-center mb-8">
+                    <div class="relative w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center floating">
+                        <i class="fas fa-robot text-4xl"></i>
+                        <div class="absolute -top-2 -right-2 bg-yellow-400 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">AI</div>
+                    </div>
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">AI-Powered Symptom Checker</h2>
+                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">Describe your symptoms and receive instant, personalized health recommendations</p>
+                <button id="startBtn" class="bg-white text-blue-600 font-bold px-8 py-3 rounded-full hover:bg-blue-50 transition transform hover:scale-105 pulse">
+                    Start Symptom Check <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-12">
+            <!-- Symptom Input Form -->
+            <div id="symptomForm" class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex items-center mb-6">
+                    <div class="bg-blue-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-clipboard-list text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">Describe Your Symptoms</h3>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-medium mb-2">Primary Symptom</label>
+                    <div class="relative">
+                        <input type="text" id="primarySymptom" placeholder="e.g. Headache, Fever, Cough..."
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition pl-10">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-medium mb-2">Additional Symptoms</label>
+                    <div class="flex flex-wrap gap-2 mb-3" id="symptomTags"></div>
+                    <div class="flex">
+                        <input type="text" id="symptomInput" placeholder="Add another symptom..."
+                                class="flex-grow px-4 py-3 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        <button id="addSymptomBtn" class="bg-blue-600 text-white px-4 py-3 rounded-r-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Duration</label>
+                        <select id="duration" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                            <option value="">Select duration</option>
+                            <option value="less-than-day">Less than a day</option>
+                            <option value="1-3-days">1-3 days</option>
+                            <option value="4-7-days">4-7 days</option>
+                            <option value="1-2-weeks">1-2 weeks</option>
+                            <option value="more-than-2-weeks">More than 2 weeks</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Severity</label>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center">
+                                <input type="radio" id="mild" name="severity" value="mild" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="mild" class="ml-2 text-gray-700">Mild</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="moderate" name="severity" value="moderate" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="moderate" class="ml-2 text-gray-700">Moderate</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="severe" name="severity" value="severe" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="severe" class="ml-2 text-gray-700">Severe</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-medium mb-2">Additional Notes</label>
+                    <textarea id="notes" rows="3" placeholder="Any other details about your condition..."
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></textarea>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button id="generateBtn" class="gradient-bg text-white font-bold px-8 py-3 rounded-lg hover:opacity-90 transition transform hover:scale-105 flex items-center">
+                        Generate Prescription <i class="fas fa-pills ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden text-center py-12">
+                <div class="flex flex-col items-center">
+                    <div class="relative w-24 h-24 mb-6">
+                        <div class="animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                        <i class="fas fa-brain text-blue-500 text-3xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold text-gray-800 mb-2">Analyzing your symptoms</h4>
+                    <p class="text-gray-600 max-w-md mx-auto">Our AI is processing your information to generate personalized health recommendations.</p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-6 max-w-sm mx-auto">
+                        <div class="bg-blue-600 h-2.5 rounded-full animate-progress"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-file-medical text-blue-600 text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800">Your Personalized Health Report</h3>
+                    </div>
+                    <button id="newCheckBtn" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                        <i class="fas fa-redo mr-2"></i> Start New Check
+                    </button>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <!-- Diagnosis Card -->
+                    <div class="bg-white rounded-xl shadow-md p-6 prescription-card">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-diagnoses text-blue-600 text-xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-gray-800">Probable Diagnosis</h4>
+                        </div>
+                        <p id="diagnosisText" class="text-gray-600">Based on your symptoms, you may be experiencing <span class="font-semibold text-blue-600">acute sinusitis</span>.</p>
+                    </div>
+                                    
+                    <!-- Severity Card -->
+                    <div class="bg-white rounded-xl shadow-md p-6 prescription-card">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-gray-800">Severity Level</h4>
+                        </div>
+                        <p id="severityText" class="text-gray-600">Your condition appears to be <span class="font-semibold text-yellow-600">moderate</span> in severity.</p>
+                    </div>
+                                    
+                    <!-- Action Card -->
+                    <div class="bg-white rounded-xl shadow-md p-6 prescription-card">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-green-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-user-md text-green-600 text-xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-gray-800">Recommended Action</h4>
+                        </div>
+                        <p id="actionText" class="text-gray-600">This can likely be managed at home, but see a doctor if symptoms worsen or persist beyond 10 days.</p>
+                    </div>
+                </div>
+                
+                <!-- Prescription Section -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                    <div class="bg-blue-600 text-white px-6 py-4">
+                        <h4 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-prescription-bottle-alt mr-3"></i> Recommended Treatment Plan
+                        </h4>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <!-- Medications -->
+                            <div>
+                                <h5 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-pills text-blue-500 mr-2"></i> Medications
+                                </h5>
+                                <ul id="medicationsList" class="space-y-3">
+                                    <li class="flex items-start">
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded mr-3">1</span>
+                                        <div>
+                                            <p class="font-medium">Acetaminophen (Tylenol)</p>
+                                            <p class="text-sm text-gray-600">500mg every 6 hours as needed for pain/fever</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded mr-3">2</span>
+                                        <div>
+                                            <p class="font-medium">Pseudoephedrine (Sudafed)</p>
+                                            <p class="text-sm text-gray-600">30mg every 6 hours for congestion (max 4 days)</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                                                            
+                            <!-- Home Care -->
+                            <div>
+                                <h5 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-home text-green-500 mr-2"></i> Home Care
+                                </h5>
+                                <ul id="homeCareList" class="space-y-3">
+                                    <li class="flex items-start">
+                                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-3">1</span>
+                                        <div>
+                                            <p class="font-medium">Nasal Saline Irrigation</p>
+                                            <p class="text-sm text-gray-600">Use a neti pot or saline spray 2-3 times daily</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-3">2</span>
+                                        <div>
+                                            <p class="font-medium">Hydration</p>
+                                            <p class="text-sm text-gray-600">Drink plenty of fluids to thin mucus</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-3">3</span>
+                                        <div>
+                                            <p class="font-medium">Rest</p>
+                                            <p class="text-sm text-gray-600">Get adequate sleep to support immune function</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning Section -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-yellow-400 text-xl mt-1 mr-3"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-yellow-700">
+                                <span class="font-bold">Important:</span> This is not a substitute for professional medical advice. If symptoms are severe, worsening, or persist beyond recommended timeframes, please consult a healthcare provider immediately. In case of emergency, call your local emergency number.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Print/Save Options -->
+                <div class="flex justify-end space-x-4">
+                    <button id="printBtn" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition flex items-center">
+                        <i class="fas fa-print mr-2"></i> Print
+                    </button>
+                    <button id="saveBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
+                        <i class="fas fa-save mr-2"></i> Save Report
+                    </button>
+                    <button id="shareBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center">
+                        <i class="fas fa-share-alt mr-2"></i> Share
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Features Section -->
+        <section class="bg-gray-100 py-12">
+            <div class="container mx-auto px-4">
+                <h3 class="text-2xl font-bold text-center text-gray-800 mb-8">Why Choose MediQuick?</h3>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-bolt text-blue-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Instant Results</h4>
+                        <p class="text-gray-600">Get health recommendations in seconds with our advanced AI technology.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                        <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-shield text-purple-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Privacy Focused</h4>
+                        <p class="text-gray-600">Your health data is encrypted and never shared without your permission.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                        <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-book-medical text-green-600 text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">Medical Expertise</h4>
+                        <p class="text-gray-600">Powered by medical professionals and the latest clinical research.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- About Page -->
+    <div id="about" class="page">
+        <section class="py-16">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About MediQuick</h2>
+                    <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-12 items-center mb-16">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
+                        <p class="text-gray-600 mb-6">MediQuick was founded with a simple goal: to make healthcare more accessible and understandable for everyone. We believe that everyone deserves quick, reliable health information when they need it most.</p>
+                        <p class="text-gray-600">Our AI-powered symptom checker analyzes your symptoms against millions of medical cases to provide personalized health recommendations in seconds.</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-6">
+                        <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" 
+                             alt="Medical team" class="rounded-lg shadow-md w-full h-auto">
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-16">
+                    <div class="bg-blue-600 text-white px-6 py-4">
+                        <h3 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-chart-line mr-3"></i> Our Impact
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid md:grid-cols-4 gap-6 text-center">
+                            <div>
+                                <div class="text-4xl font-bold text-blue-600 mb-2">1M+</div>
+                                <div class="text-gray-600">Users Served</div>
+                            </div>
+                            <div>
+                                <div class="text-4xl font-bold text-purple-600 mb-2">95%</div>
+                                <div class="text-gray-600">Accuracy Rate</div>
+                            </div>
+                            <div>
+                                <div class="text-4xl font-bold text-green-600 mb-2">24/7</div>
+                                <div class="text-gray-600">Availability</div>
+                            </div>
+                            <div>
+                                <div class="text-4xl font-bold text-yellow-600 mb-2">50+</div>
+                                <div class="text-gray-600">Conditions Covered</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mb-16">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Our Medical Team</h3>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <div class="w-32 h-32 rounded-full bg-blue-100 mx-auto mb-4 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" 
+                                     alt="Dr. Sarah Johnson" class="w-full h-full object-cover">
+                            </div>
+                            <h4 class="text-xl font-semibold text-gray-800 mb-1">Dr. Sarah Johnson</h4>
+                            <p class="text-blue-600 mb-3">Chief Medical Officer</p>
+                            <p class="text-gray-600">Board-certified internist with 15 years of clinical experience.</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <div class="w-32 h-32 rounded-full bg-blue-100 mx-auto mb-4 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1124&q=80" 
+                                     alt="Dr. Michael Chen" class="w-full h-full object-cover">
+                            </div>
+                            <h4 class="text-xl font-semibold text-gray-800 mb-1">Dr. Michael Chen</h4>
+                            <p class="text-blue-600 mb-3">AI Research Director</p>
+                            <p class="text-gray-600">PhD in Biomedical Informatics with expertise in machine learning.</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <div class="w-32 h-32 rounded-full bg-blue-100 mx-auto mb-4 overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
+                                     alt="Dr. Lisa Rodriguez" class="w-full h-full object-cover">
+                            </div>
+                            <h4 class="text-xl font-semibold text-gray-800 mb-1">Dr. Lisa Rodriguez</h4>
+                            <p class="text-blue-600 mb-3">Clinical Advisor</p>
+                            <p class="text-gray-600">Emergency medicine specialist with focus on triage systems.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-xl p-8 text-center">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Ready to Try MediQuick?</h3>
+                    <p class="text-gray-600 mb-6 max-w-2xl mx-auto">Experience the future of healthcare with our AI-powered symptom checker. Get started today!</p>
+                    <button class="gradient-bg text-white font-bold px-8 py-3 rounded-lg hover:opacity-90 transition transform hover:scale-105">
+                        Start Symptom Check <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- FAQ Page -->
+    <div id="faq" class="page">
+        <section class="py-16">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Find answers to common questions about MediQuick and how it works.</p>
+                    <div class="w-24 h-1 bg-blue-600 mx-auto mt-4"></div>
+                </div>
+                
+                <div class="max-w-3xl mx-auto space-y-4 mb-16">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="faq-question w-full text-left px-6 py-4 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center">
+                            How accurate is the AI diagnosis?
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-4 text-gray-600 hidden">
+                            Our AI system has been trained on millions of medical cases and achieves an accuracy rate of approximately 85-90% for common conditions. However, it's not a substitute for professional medical advice and should be used for informational purposes only. The system is continuously learning and improving as more data becomes available.
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="faq-question w-full text-left px-6 py-4 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center">
+                            Is my personal health data secure?
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-4 text-gray-600 hidden">
+                            Yes, we take data privacy very seriously. All your information is encrypted and stored securely. We do not share your personal health data with third parties without your explicit consent. Our platform complies with HIPAA regulations and other global data protection standards to ensure your information remains confidential.
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="faq-question w-full text-left px-6 py-4 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center">
+                            What conditions can the symptom checker identify?
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-4 text-gray-600 hidden">
+                            Our system can identify hundreds of common conditions including colds, flu, allergies, migraines, sinus infections, urinary tract infections, gastrointestinal issues, and more. For rare or complex conditions, we recommend consulting a healthcare professional. The system will also alert you if your symptoms suggest a potentially serious condition that requires immediate medical attention.
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="faq-question w-full text-left px-6 py-4 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center">
+                            How does MediQuick compare to seeing a real doctor?
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-4 text-gray-600 hidden">
+                            MediQuick is designed to provide preliminary health information and recommendations, but it doesn't replace the expertise of a licensed healthcare provider. While our AI can identify likely causes of symptoms, a doctor can perform physical examinations, order tests, and provide personalized treatment plans. We recommend using MediQuick for initial guidance and following up with a doctor for serious or persistent symptoms.
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="faq-question w-full text-left px-6 py-4 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center">
+                            Can I use MediQuick for my children?
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-4 text-gray-600 hidden">
+                            Yes, MediQuick has a pediatric mode that adjusts recommendations based on a child's age and developmental stage. However, we recommend extra caution when assessing children's symptoms, as they can deteriorate more quickly than adults. Always consult a pediatrician for children under 2 years old or if symptoms are severe.
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <button class="faq-question w-full text-left px-6 py-4 font-medium text-gray-700 hover:bg-gray-50 transition flex justify-between items-center">
+                            Is there a mobile app available?
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </button>
+                        <div class="faq-answer px-6 pb-4 text-gray-600 hidden">
+                            Yes! MediQuick is available as a free download on both iOS and Android platforms. The mobile app offers all the features of our web version plus additional tools like medication reminders, symptom tracking over time, and the ability to save your health reports for future reference.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-xl p-8 text-center max-w-4xl mx-auto">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Still have questions?</h3>
+                    <p class="text-gray-600 mb-6">Our support team is available 24/7 to help with any questions or concerns you may have.</p>
+                    <button class="gradient-bg text-white font-bold px-8 py-3 rounded-lg hover:opacity-90 transition transform hover:scale-105">
+                        Contact Support <i class="fas fa-headset ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Contact Page -->
+    <div id="contact" class="page">
+        <section class="py-16">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Contact Us</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Have questions or feedback? We'd love to hear from you!</p>
+                    <div class="w-24 h-1 bg-blue-600 mx-auto mt-4"></div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-12 mb-16">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Send Us a Message</h3>
+                        <form id="contactForm" class="space-y-6">
+                            <div>
+                                <label for="name" class="block text-gray-700 font-medium mb-2">Your Name</label>
+                                <input type="text" id="name" name="name" required
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                            </div>
+                            
+                            <div>
+                                <label for="email" class="block text-gray-700 font-medium mb-2">Email Address</label>
+                                <input type="email" id="email" name="email" required
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                            </div>
+                            
+                            <div>
+                                <label for="subject" class="block text-gray-700 font-medium mb-2">Subject</label>
+                                <select id="subject" name="subject" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                                    <option value="general">General Inquiry</option>
+                                    <option value="support">Technical Support</option>
+                                    <option value="feedback">Product Feedback</option>
+                                    <option value="partnership">Partnership Opportunity</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="message" class="block text-gray-700 font-medium mb-2">Message</label>
+                                <textarea id="message" name="message" rows="5" required
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"></textarea>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="consent" name="consent" required
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="consent" class="ml-2 text-gray-700">I agree to the processing of my personal data</label>
+                            </div>
+                            
+                            <button type="submit" class="gradient-bg text-white font-bold px-8 py-3 rounded-lg hover:opacity-90 transition transform hover:scale-105 w-full md:w-auto">
+                                Send Message <i class="fas fa-paper-plane ml-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Our Information</h3>
+                        <div class="bg-white rounded-xl shadow-md p-6 space-y-6">
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-map-marker-alt text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Address</h4>
+                                    <p class="text-gray-600">123 Health Street, Medville, HV 12345</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-purple-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-phone-alt text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Phone</h4>
+                                    <p class="text-gray-600">(123) 456-7890</p>
+                                    <p class="text-gray-600 text-sm">Monday-Friday, 9am-5pm EST</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-green-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-envelope text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Email</h4>
+                                    <p class="text-gray-600">support@mediquick.com</p>
+                                    <p class="text-gray-600">info@mediquick.com</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-headset text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Emergency Support</h4>
+                                    <p class="text-gray-600">emergency@mediquick.com</p>
+                                    <p class="text-gray-600 text-sm">24/7 availability for urgent matters</p>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-4">
+                                <h4 class="font-semibold text-gray-800 mb-3">Follow Us</h4>
+                                <div class="flex space-x-4">
+                                    <a href="#" class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-200 transition">
+                                        <i class="fab fa-facebook-f"></i>
+                                    </a>
+                                    <a href="#" class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-200 transition">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                    <a href="#" class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-200 transition">
+                                        <i class="fab fa-instagram"></i>
+                                    </a>
+                                    <a href="#" class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-200 transition">
+                                        <i class="fab fa-linkedin-in"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-16">
+                    <div class="bg-blue-600 text-white px-6 py-4">
+                        <h3 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-map-marked-alt mr-3"></i> Find Our Office
+                        </h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
+                            <!-- Map placeholder - in a real implementation you would embed a Google Map or similar -->
+                            <div class="w-full h-64 bg-gray-300 flex items-center justify-center">
+                                <i class="fas fa-map text-4xl text-gray-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Join Our Newsletter</h3>
+                    <p class="text-gray-600 mb-6 max-w-2xl mx-auto">Stay updated with the latest health tips, product news, and special offers from MediQuick.</p>
+                    <form class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+                        <input type="email" placeholder="Your email address" 
+                               class="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        <button type="submit" class="gradient-bg text-white font-bold px-8 py-3 rounded-lg hover:opacity-90 transition transform hover:scale-105">
+                            Subscribe <i class="fas fa-envelope-open-text ml-2"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-heartbeat mr-2"></i> MediQuick
+                    </h4>
+                    <p class="text-gray-400">AI-powered symptom analysis and health recommendations.</p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h5 class="font-bold mb-4">Quick Links</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="nav-link text-gray-400 hover:text-white transition" data-page="home">Home</a></li>
+                        <li><a href="#" class="nav-link text-gray-400 hover:text-white transition" data-page="about">About</a></li>
+                        <li><a href="#" class="nav-link text-gray-400 hover:text-white transition" data-page="faq">FAQ</a></li>
+                        <li><a href="#" class="nav-link text-gray-400 hover:text-white transition" data-page="contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold mb-4">Resources</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Health Articles</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Symptom Glossary</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Find a Doctor</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Emergency Contacts</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold mb-4">Legal</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">HIPAA Compliance</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 MediQuick. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const startBtn = document.getElementById('startBtn');
+            const symptomForm = document.getElementById('symptomForm');
+            const loadingState = document.getElementById('loadingState');
+            const resultsSection = document.getElementById('resultsSection');
+            const generateBtn = document.getElementById('generateBtn');
+            const newCheckBtn = document.getElementById('newCheckBtn');
+            const printBtn = document.getElementById('printBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const symptomInput = document.getElementById('symptomInput');
+            const addSymptomBtn = document.getElementById('addSymptomBtn');
+            const symptomTags = document.getElementById('symptomTags');
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            const contactForm = document.getElementById('contactForm');
+            
+            // Sample data for demonstration
+            const diagnoses = [
+                { name: "acute sinusitis", severity: "moderate", action: "home care" },
+                { name: "migraine", severity: "moderate", action: "medication" },
+                { name: "tension headache", severity: "mild", action: "home care" },
+                { name: "common cold", severity: "mild", action: "home care" },
+                { name: "influenza", severity: "moderate", action: "see doctor" },
+                { name: "allergic rhinitis", severity: "mild", action: "medication" },
+                { name: "gastroenteritis", severity: "moderate", action: "home care" }
+            ];
+
+            const medications = [
+                { name: "Acetaminophen (Tylenol)", dosage: "500mg every 6 hours as needed for pain/fever" },
+                { name: "Ibuprofen (Advil)", dosage: "200-400mg every 6-8 hours as needed for pain/fever" },
+                { name: "Pseudoephedrine (Sudafed)", dosage: "30mg every 6 hours for congestion (max 4 days)" },
+                { name: "Diphenhydramine (Benadryl)", dosage: "25-50mg every 4-6 hours as needed for allergies" },
+                { name: "Loratadine (Claritin)", dosage: "10mg once daily for allergies" },
+                { name: "Omeprazole (Prilosec)", dosage: "20mg once daily for heartburn" }
+            ];
+
+            const homeCare = [
+                { name: "Nasal Saline Irrigation", instructions: "Use a neti pot or saline spray 2-3 times daily" },
+                { name: "Hydration", instructions: "Drink plenty of fluids to thin mucus" },
+                { name: "Rest", instructions: "Get adequate sleep to support immune function" },
+                { name: "Steam Inhalation", instructions: "Breathe in steam from hot water to relieve congestion" },
+                { name: "Warm Compress", instructions: "Apply to affected area for 15-20 minutes to relieve pain" },
+                { name: "Gargle Salt Water", instructions: "Mix 1/2 teaspoon salt in warm water to soothe throat" }
+            ];
+
+            // Navigation functionality
+            function switchPage(pageId) {
+                // Hide all pages
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // Show selected page
+                document.getElementById(pageId).classList.add('active');
+                
+                // Close mobile menu if open
+                mobileMenu.classList.add('hidden');
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page');
+                    switchPage(pageId);
+                });
+            });
+
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Set home as default page
+            switchPage('home');
+
+            // Event Listeners
+            startBtn.addEventListener('click', function() {
+                switchPage('home');
+                setTimeout(() => {
+                    symptomForm.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            });
+
+            generateBtn.addEventListener('click', function() {
+                // Validate form
+                const primarySymptom = document.getElementById('primarySymptom').value;
+                if (!primarySymptom) {
+                    showAlert('Please enter at least your primary symptom', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                symptomForm.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+                
+                // Simulate API call with timeout
+                setTimeout(function() {
+                    loadingState.classList.add('hidden');
+                    
+                    // Generate random diagnosis for demo
+                    const randomDiagnosis = diagnoses[Math.floor(Math.random() * diagnoses.length)];
+                    const randomMeds = [...medications].sort(() => 0.5 - Math.random()).slice(0, 2);
+                    const randomHomeCare = [...homeCare].sort(() => 0.5 - Math.random()).slice(0, 3);
+                    
+                    // Update results
+                    document.getElementById('diagnosisText').innerHTML = 
+                        `Based on your symptoms, you may be experiencing <span class="font-semibold text-blue-600">${randomDiagnosis.name}</span>.`;
+                    
+                    document.getElementById('severityText').innerHTML = 
+                        `Your condition appears to be <span class="font-semibold text-yellow-600">${randomDiagnosis.severity}</span> in severity.`;
+                    
+                    let actionText = "";
+                    if (randomDiagnosis.action === "see doctor") {
+                        actionText = "You should consult a healthcare provider for proper evaluation and treatment.";
+                    } else if (randomDiagnosis.action === "medication") {
+                        actionText = "This can likely be managed with over-the-counter medications.";
+                    } else {
+                        actionText = "This can likely be managed at home, but see a doctor if symptoms worsen or persist beyond 10 days.";
+                    }
+                    document.getElementById('actionText').textContent = actionText;
+                    
+                    // Update medications
+                    const medsList = document.getElementById('medicationsList');
+                    medsList.innerHTML = '';
+                    randomMeds.forEach((med, index) => {
+                        medsList.innerHTML += `
+                            <li class="flex items-start">
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded mr-3">${index + 1}</span>
+                                <div>
+                                    <p class="font-medium">${med.name}</p>
+                                    <p class="text-sm text-gray-600">${med.dosage}</p>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    
+                    // Update home care
+                    const homeCareList = document.getElementById('homeCareList');
+                    homeCareList.innerHTML = '';
+                    randomHomeCare.forEach((care, index) => {
+                        homeCareList.innerHTML += `
+                            <li class="flex items-start">
+                                <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-3">${index + 1}</span>
+                                <div>
+                                    <p class="font-medium">${care.name}</p>
+                                    <p class="text-sm text-gray-600">${care.instructions}</p>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    
+                    // Show results with animation
+                    resultsSection.classList.remove('hidden');
+                    resultsSection.classList.add('fade-in');
+                    
+                    // Scroll to results
+                    setTimeout(() => {
+                        resultsSection.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                }, 2000);
+            });
+
+            newCheckBtn.addEventListener('click', function() {
+                // Reset form
+                document.getElementById('primarySymptom').value = '';
+                document.getElementById('symptomInput').value = '';
+                document.getElementById('duration').value = '';
+                document.querySelector('input[name="severity"]:checked')?.removeAttribute('checked');
+                document.getElementById('notes').value = '';
+                symptomTags.innerHTML = '';
+                
+                // Hide results and show form
+                resultsSection.classList.add('hidden');
+                symptomForm.classList.remove('hidden');
+                
+                // Scroll to form
+                symptomForm.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            printBtn.addEventListener('click', function() {
+                window.print();
+            });
+
+            saveBtn.addEventListener('click', function() {
+                showAlert('Report saved to your account', 'success');
+            });
+
+            shareBtn.addEventListener('click', function() {
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'My MediQuick Health Report',
+                        text: 'Check out my health report generated by MediQuick AI Symptom Checker',
+                        url: window.location.href
+                    }).catch(err => {
+                        showAlert('Error sharing: ' + err, 'error');
+                    });
+                } else {
+                    showAlert('Web Share API not supported in your browser', 'info');
+                }
+            });
+
+            // Symptom tag functionality
+            addSymptomBtn.addEventListener('click', addSymptomTag);
+            symptomInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addSymptomTag();
+                }
+            });
+
+            function addSymptomTag() {
+                const symptom = symptomInput.value.trim();
+                if (symptom) {
+                    const tag = document.createElement('div');
+                    tag.className = 'symptom-chip bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center';
+                    tag.innerHTML = `
+                        ${symptom}
+                        <button class="ml-2 text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    `;
+                    
+                    tag.querySelector('button').addEventListener('click', function() {
+                        tag.remove();
+                    });
+                    
+                    symptomTags.appendChild(tag);
+                    symptomInput.value = '';
+                }
+            }
+
+            // FAQ accordion functionality
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', function() {
+                    const answer = this.nextElementSibling;
+                    const icon = this.querySelector('i');
+                    
+                    // Toggle answer visibility
+                    answer.classList.toggle('hidden');
+                    
+                    // Rotate icon
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+
+            // Contact form submission
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const subject = document.getElementById('subject').value;
+                const message = document.getElementById('message').value;
+                
+                // In a real app, you would send this data to your server
+                console.log('Form submitted:', { name, email, subject, message });
+                
+                // Show success message
+                showAlert('Your message has been sent successfully! We will get back to you soon.', 'success');
+                
+                // Reset form
+                contactForm.reset();
+            });
+
+            // Show alert function
+            function showAlert(message, type) {
+                const alertDiv = document.createElement('div');
+                let bgColor = 'bg-blue-100 text-blue-800';
+                
+                if (type === 'error') {
+                    bgColor = 'bg-red-100 text-red-800';
+                } else if (type === 'success') {
+                    bgColor = 'bg-green-100 text-green-800';
+                } else if (type === 'info') {
+                    bgColor = 'bg-blue-100 text-blue-800';
+                }
+                
+                alertDiv.className = `fixed top-4 right-4 ${bgColor} px-6 py-3 rounded-lg shadow-lg flex items-center z-50`;
+                alertDiv.innerHTML = `
+                    <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} mr-3"></i>
+                    ${message}
+                    <button class="ml-4">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                alertDiv.querySelector('button').addEventListener('click', function() {
+                    alertDiv.remove();
+                });
+                
+                document.body.appendChild(alertDiv);
+                
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
